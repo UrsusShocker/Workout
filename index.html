@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LDR Workout Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pink-bg: #fff5f8;
+            --pink-bg-gradient: linear-gradient(135deg, #fff5f8 0%, #ffeef2 100%);
+            --pink-accent-soft: #ffb3c6;
+            --pink-accent-strong: #ff8fab;
+            --pink-text: #ad6b7f;
+
+            --blue-bg: #f0f4f8;
+            --blue-bg-gradient: linear-gradient(135deg, #f0f4f8 0%, #e6eaf0 100%);
+            --blue-accent-soft: #a3b8d1;
+            --blue-accent-strong: #4a6fa5;
+            --blue-text: #3e5a7e;
+
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --bg-light: #f9fafb;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', 'Poppins', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .main-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #fff;
+            padding: 0.5rem 1rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .main-nav a {
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+        }
+        
+        .main-nav a.active {
+            color: var(--blue-accent-strong);
+        }
+
+        .main-nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 3px;
+            background-color: var(--blue-accent-strong);
+            border-radius: 2px;
+        }
+        
+        .main-nav a:hover {
+            background-color: #f7f7f7;
+        }
+        
+        .view-container {
+            display: none;
+        }
+        
+        .view-container.active {
+            display: block;
+        }
+        
+        .app-container {
+            display: flex;
+            min-height: calc(100vh - 65px);
+            width: 100%;
+            align-items: stretch;
+        }
+        .view-container.active .app-container {
+             display: flex;
+        }
+
+        .panel {
+            flex: 1;
+            padding: 2.5rem 3rem;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease-in-out;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .wife-panel {
+            background: linear-gradient(to bottom, #ffe0f0, #fff0f5);
+            background-size: 100% 200%;
+            animation: flowAnimation 40s linear infinite;
+            position: relative;
+        }
+        .husband-panel {
+            background: linear-gradient(to bottom, #cce4ff, #e0f7ff);
+            background-size: 100% 200%;
+            animation: flowAnimation 40s linear infinite;
+        }
+
+        @keyframes flowAnimation {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 0% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        .wife-panel::before,
+        .wife-panel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 10px;
+            height: 100%;
+            transform: translateX(50%);
+            background-repeat: repeat-y;
+            background-size: 10px 30px;
+            z-index: 5;
+        }
+
+        .wife-panel::after {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 30' width='10' height='30'%3e%3cpath d='M 5 0 C -5 10, 15 20, 5 30' stroke='%23ffb3c6' stroke-width='2' fill='none'/%3e%3c/svg%3e");
+            animation: squiggly-flow 4s linear infinite;
+        }
+
+        .wife-panel::before {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 30' width='10' height='30'%3e%3cpath d='M 5 0 C 15 10, -5 20, 5 30' stroke='%23a3b8d1' stroke-width='2' fill='none'/%3e%3c/svg%3e");
+            animation: squiggly-flow-reverse 4s linear infinite;
+        }
+
+        @keyframes squiggly-flow {
+            from { background-position: 0 0; }
+            to { background-position: 0 -30px; }
+        }
+        @keyframes squiggly-flow-reverse {
+            from { background-position: 0 -30px; }
+            to { background-position: 0 0; }
+        }
+
+        .panel-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+        }
+        .panel-header h2 {
+            font-weight: 700;
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .wife-panel .panel-header h2 { color: var(--pink-text); }
+        .husband-panel .panel-header h2 { color: var(--blue-text); }
+        
+        .streaks-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .streak-box {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            box-shadow: var(--shadow-light);
+        }
+        .streak-box .label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            opacity: 0.7;
+        }
+        .wife-panel .streak-box .label { color: var(--pink-text); }
+        .husband-panel .streak-box .label { color: var(--blue-text); }
+        
+        .streak-box .count {
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .wife-panel .streak-box .count { color: var(--pink-accent-strong); }
+        .husband-panel .streak-box .count { color: var(--blue-accent-strong); }
+
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding-top: 1rem;
+        }
+        .clear-tasks-btn {
+            background: transparent;
+            border: 1px solid;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .wife-panel .clear-tasks-btn { 
+            color: var(--pink-text); 
+            border-color: var(--pink-accent-soft); 
+        }
+        .husband-panel .clear-tasks-btn { 
+            color: var(--blue-text); 
+            border-color: var(--blue-accent-soft); 
+        }
+        .clear-tasks-btn:hover {
+            transform: translateY(-2px);
+        }
+        .wife-panel .clear-tasks-btn:hover { background: var(--pink-accent-soft); color: #fff; }
+        .husband-panel .clear-tasks-btn:hover { background: var(--blue-accent-soft); color: #fff; }
+
+        .workout-section {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            flex-grow: 1;
+        }
+        .workout-section h4.sub-heading {
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(0,0,0,0.07);
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+        .workout-section h4.sub-heading:first-of-type {
+             margin-top: 0;
+             padding-top: 0;
+             border-top: none;
+        }
+
+        .wife-panel .workout-section h4 { color: var(--pink-text); }
+        .husband-panel .workout-section h4 { color: var(--blue-text); }
+
+        .task-list { list-style: none; }
+        .task-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px;
+        }
+        .task-item:hover {
+            transform: scale(1.02);
+            box-shadow: var(--shadow-light);
+        }
+        .task-item input[type="checkbox"] { display: none; }
+        .task-item label { display: flex; align-items: center; cursor: pointer; width: 100%; }
+        .custom-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid;
+            border-radius: 8px;
+            margin-right: 12px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        .wife-panel .custom-checkbox { border-color: var(--pink-accent-soft); }
+        .husband-panel .custom-checkbox { border-color: var(--blue-accent-soft); }
+        .custom-checkbox svg {
+            width: 18px; height: 18px; opacity: 0; transform: scale(0.5);
+            transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        .task-item input[type="checkbox"]:checked + label .custom-checkbox {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            animation: pop 0.4s ease;
+        }
+        .wife-panel .task-item input[type="checkbox"]:checked + label .custom-checkbox { --accent-color: var(--pink-accent-strong); }
+        .husband-panel .task-item input[type="checkbox"]:checked + label .custom-checkbox { --accent-color: var(--blue-accent-strong); }
+        .task-item input[type="checkbox"]:checked + label .task-name { text-decoration: line-through; opacity: 0.5; }
+
+        .task-name { color: var(--text-dark); transition: all 0.2s ease; cursor: help; }
+        
+        .editable-reps { display: flex; align-items: center; margin-left: auto; font-size: 0.9em; color: var(--text-light); white-space: nowrap; }
+        .editable-reps input {
+            width: 45px; border: 1px solid var(--border-color); border-radius: 4px; text-align: center;
+            font-family: 'Inter', sans-serif; margin: 0 5px; padding: 2px 0;
+        }
+        .editable-reps input:focus { outline: 2px solid var(--accent-color); border-color: transparent; }
+        .husband-panel .editable-reps input:focus { --accent-color: var(--blue-accent-strong); }
+        .wife-panel .editable-reps input:focus { --accent-color: var(--pink-accent-strong); }
+
+        .notes-box {
+            width: 100%; min-height: 100px; padding: 1rem; border-radius: 12px; border: none;
+            font-family: 'Inter', sans-serif; font-size: 1rem; resize: vertical;
+            background: rgba(255, 255, 255, 0.6); box-shadow: var(--shadow); color: var(--text-light);
+            margin-top: 1.5rem;
+        }
+        .notes-box:focus { outline: 2px solid var(--accent-color); }
+        .wife-panel .notes-box:focus { --accent-color: var(--pink-accent-strong); }
+        .husband-panel .notes-box:focus { --accent-color: var(--blue-accent-strong); }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6);
+            display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s; z-index: 1000;
+        }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2); transform: scale(0.9); transition: transform 0.3s;
+        }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-content h3 { margin-bottom: 1rem; }
+        .modal-content p { color: var(--text-light); }
+
+        .placeholder-page {
+            padding: 3rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .placeholder-page h2 { font-size: 2.5rem; color: var(--text-dark); margin-bottom: 1rem; }
+        .placeholder-page p { font-size: 1.2rem; color: var(--text-light); margin-top: 2rem; }
+
+        .progress-streak-display {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+        .streak-highlight {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            width: 80%;
+            max-width: 500px;
+        }
+        .streak-highlight h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .alivah-streak h2 { color: var(--pink-text); }
+        .hasan-streak h2 { color: var(--blue-text); }
+
+        .streak-highlight .streak-value {
+            font-size: 2.5rem;
+            animation: pulseGlowPink 2s infinite ease-in-out;
+        }
+        .hasan-streak .streak-value {
+            animation-name: pulseGlowBlue;
+        }
+
+        @keyframes pulseGlowPink {
+            0%, 100% {
+                transform: scale(1);
+                text-shadow: 0 0 5px rgba(255, 179, 198, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                text-shadow: 0 0 15px rgba(255, 143, 171, 0.8);
+            }
+        }
+        @keyframes pulseGlowBlue {
+            0%, 100% {
+                transform: scale(1);
+                text-shadow: 0 0 5px rgba(163, 184, 209, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                text-shadow: 0 0 15px rgba(74, 111, 165, 0.8);
+            }
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 1024px) {
+            .app-container { flex-direction: column; }
+            .wife-panel { border-right: none; border-bottom: 1px solid #ffe1e9; }
+            .wife-panel::after, .wife-panel::before { display: none; }
+            .panel { padding: 1.5rem; }
+        }
+        @media (max-width: 768px) {
+            .streaks-container { flex-direction: column; }
+            .panel-header h2 { font-size: 1.8rem; }
+            .streak-highlight h2 { font-size: 1.5rem; }
+            .streak-highlight .streak-value { font-size: 2rem; }
+        }
+
+        .wife-panel .panel-header h2 {
+            text-shadow: 1px 1px 3px rgba(255, 179, 198, 0.5);
+        }
+
+        .cute-emoji {
+            display: inline-block;
+            animation: sparkle 2.5s ease-in-out infinite;
+            margin-right: 0.25em;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.2) rotate(-5deg); }
+            75% { transform: scale(1.2) rotate(5deg); }
+        }
+
+        .notes-display-container {
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .note-display {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .note-display h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .alivah-note h3 { color: var(--pink-text); }
+        .hasan-note h3 { color: var(--blue-text); }
+
+        .note-display p {
+            font-size: 1rem;
+            color: var(--text-light);
+            min-height: 50px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        @media (max-width: 768px) {
+            .notes-display-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="main-nav">
+        <a href="#" class="nav-link active" data-view="workout">Workout</a>
+        <a href="#" class="nav-link" data-view="progress">Progress</a>
+    </nav>
+
+    <main id="workout-view" class="view-container active">
+        <div class="app-container">
+            <section class="panel wife-panel" id="wife-side">
+                <div class="panel-header">
+                    <h2>Aliyahs Workout (cute ahh 💪😻)</h2>
+                     <div class="header-controls">
+                        <button class="clear-tasks-btn" id="wife-clear-btn">Clear All (cutely)</button>
+                    </div>
+                </div>
+
+                <div class="workout-section">
+                    <h4 class="sub-heading"><span class="cute-emoji">💖</span> 1. Warmup (5 min)</h4>
+                    <ul class="task-list">
+                        <li class="task-item"><input type="checkbox" id="wife-task-1"><label for="wife-task-1"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Stand with feet shoulder-width apart. Jump while spreading legs and bringing arms overhead. Return to start.">Jumping Jacks</span></label><div class="editable-reps"><input type="number" value="25" data-rep-id="wife-jj"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-2"><label for="wife-task-2"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Extend arms to sides. Make 10 small circles forward, then 10 backward.">Arm Circles</span></label><div class="editable-reps"><input type="number" value="10" data-rep-id="wife-arm-circles"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-3"><label for="wife-task-3"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Stand and march in place, bringing your knees up as high as you can toward your chest.">High Knees</span></label><div class="editable-reps"><input type="number" value="10" data-rep-id="wife-high-knees"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-4"><label for="wife-task-4"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Stand with feet shoulder-width apart. Lower your hips as if sitting in a chair, keeping your chest up and back straight.">Bodyweight Squats</span></label><div class="editable-reps"><input type="number" value="10" data-rep-id="wife-bw-squats"></div></li>
+                    </ul>
+                    
+                    <h4 class="sub-heading"><span class="cute-emoji">🌸</span> 2. Lower Body (Repeat 2x)</h4>
+                    <ul class="task-list">
+                        <li class="task-item"><input type="checkbox" id="wife-task-5"><label for="wife-task-5"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Stand with feet shoulder-width apart. Lower your hips as if sitting in a chair, keeping your chest up and back straight.">Squats</span></label><div class="editable-reps"><input type="number" value="15" data-rep-id="wife-squats"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-6"><label for="wife-task-6"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Step forward with one leg, lowering your hips until both knees are bent at a 90-degree angle. Push back to the starting position.">Lunges (each leg)</span></label><div class="editable-reps"><input type="number" value="12" data-rep-id="wife-lunges"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-7"><label for="wife-task-7"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Lie on your back with knees bent. Lift your hips off the floor until your body forms a straight line from your shoulders to your knees. Squeeze glutes at the top.">Glute Bridges</span></label><div class="editable-reps"><input type="number" value="15" data-rep-id="wife-glute-bridges"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-8"><label for="wife-task-8"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Stand with feet flat. Push through the balls of your feet to raise your heels as high as possible.">Calf Raises</span></label><div class="editable-reps"><input type="number" value="20" data-rep-id="wife-calf-raises"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-9"><label for="wife-task-9"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Perform a regular squat, but explode upwards into a jump from the bottom position. Land softly.">Jump Squats</span></label><div class="editable-reps"><input type="number" value="10" data-rep-id="wife-jump-squats"></div></li>
+                    </ul>
+
+                    <h4 class="sub-heading"><span class="cute-emoji">✨</span> 3. Upper Body (Repeat 2x)</h4>
+                    <ul class="task-list">
+                        <li class="task-item"><input type="checkbox" id="wife-task-10"><label for="wife-task-10"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Place hands on an elevated surface (like a desk or wall). Lower your chest towards the surface, then push back up. The higher the surface, the easier.">Incline Push-ups</span></label><div class="editable-reps"><input type="number" value="10" data-rep-id="wife-incline-pushups"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-11"><label for="wife-task-11"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Extend arms out to your sides at shoulder height, palms down. Make small, controlled up-and-down pulses.">Arm Pulses</span></label><div class="editable-reps"><input type="number" value="12" data-rep-id="wife-arm-pulses"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-12"><label for="wife-task-12"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Sit on the edge of a chair or bed. Place hands beside hips. Slide your bottom off the edge, then bend elbows to lower your body. Push back up.">Tricep Dips</span></label><div class="editable-reps"><input type="number" value="10" data-rep-id="wife-tricep-dips"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-13"><label for="wife-task-13"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Hold dumbbells or water bottles with palms facing forward. Bend at the elbow to curl the weight toward your shoulder.">Bicep Curls</span></label><div class="editable-reps"><input type="number" value="15" data-rep-id="wife-bicep-curls"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-14"><label for="wife-task-14"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Get into a high plank position. Keeping your core tight and hips stable, tap your left shoulder with your right hand, then vice versa.">Shoulder Tap Plank</span></label><div class="editable-reps"><input type="number" value="30" data-rep-id="wife-shoulder-plank">s</div></li>
+                    </ul>
+
+                    <h4 class="sub-heading"><span class="cute-emoji">🌸</span> 4. Core / Abs (Repeat 2x)</h4>
+                    <ul class="task-list">
+                        <li class="task-item"><input type="checkbox" id="wife-task-15"><label for="wife-task-15"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Sit on the floor, lean back slightly, and lift your feet. Clasp hands and twist your torso from side to side.">Russian Twists</span></label><div class="editable-reps"><input type="number" value="20" data-rep-id="wife-russian-twists"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-16"><label for="wife-task-16"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Lie on your back, legs straight. Keeping your lower back pressed to the floor, slowly raise your legs to a 90-degree angle, then lower them back down.">Leg Raises</span></label><div class="editable-reps"><input type="number" value="15" data-rep-id="wife-leg-raises"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-17"><label for="wife-task-17"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Hold a push-up position, resting on your forearms instead of hands. Keep your body in a straight line from head to heels.">Plank</span></label><div class="editable-reps"><input type="number" value="30" data-rep-id="wife-plank">s</div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-18"><label for="wife-task-18"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Lie on your back, hands behind your head. Bring one knee towards the opposite elbow while extending the other leg. Alternate sides.">Bicycle Crunches</span></label><div class="editable-reps"><input type="number" value="15" data-rep-id="wife-bicycle-crunches"></div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-19"><label for="wife-task-19"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Lie on your back, lift your heels a few inches off the floor. Make small, rapid up-and-down kicking motions.">Flutter Kicks</span></label><div class="editable-reps"><input type="number" value="20" data-rep-id="wife-flutter-kicks"></div></li>
+                    </ul>
+
+                    <h4 class="sub-heading"><span class="cute-emoji">🎀</span> 5. Burnout + Stretch</h4>
+                    <ul class="task-list">
+                        <li class="task-item"><input type="checkbox" id="wife-task-20"><label for="wife-task-20"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Stand with your back against a wall. Slide down until your knees are at a 90-degree angle, as if sitting in an invisible chair. Hold.">Wall Sit</span></label><div class="editable-reps"><input type="number" value="1" data-rep-id="wife-wall-sit"> min</div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-21"><label for="wife-task-21"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Hold a push-up position, resting on your forearms instead of hands. Keep your body in a straight line from head to heels.">Plank Hold</span></label><div class="editable-reps"><input type="number" value="1" data-rep-id="wife-plank-hold"> min</div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-22"><label for="wife-task-22"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Just like the warmup! Give it one last push.">Jumping Jacks</span></label><div class="editable-reps"><input type="number" value="30" data-rep-id="wife-jj-burnout">s</div></li>
+                        <li class="task-item"><input type="checkbox" id="wife-task-23"><label for="wife-task-23"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Gently stretch your major muscle groups: hamstrings, quads, shoulders, chest, and back. Hold each stretch for 20-30 seconds.">Stretching</span></label><div class="editable-reps"><input type="number" value="2" data-rep-id="wife-stretching"> min</div></li>
+                    </ul>
+                </div>
+                
+                <textarea id="wife-notes" class="notes-box" placeholder="Cute notes, workout feelings, or happy thoughts..."></textarea>
+            </section>
+            
+            <section class="panel husband-panel" id="husband-side">
+                <div class="panel-header">
+                    <h2>Hasans Workout (cool ahh 💪😎)</h2>
+                    <div class="header-controls">
+                        <button class="clear-tasks-btn" id="husband-clear-btn">Clear All (cooly)</button>
+                    </div>
+                </div>
+
+                <div class="workout-section">
+                    <h4 class="sub-heading">1. Knock Knee Rehab</h4>
+                    <ul class="task-list">
+                        <li class="task-item"><input type="checkbox" id="hus-task-1"><label for="hus-task-1"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Lie on your side with knees bent at 45 degrees. Keeping feet together, raise your upper knee as high as you can without moving your pelvis.">Clamshells</span></label><div class="editable-reps">2 x <input type="number" value="20" data-rep-id="hus-clamshells"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-2"><label for="hus-task-2"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Lie on your side with legs straight. Raise your top leg towards the ceiling without rocking your body.">Side-Lying Leg Raises</span></label><div class="editable-reps">2 x <input type="number" value="20" data-rep-id="hus-sidelifts"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-3"><label for="hus-task-3"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Perform a wall sit with a resistance band around your thighs. Actively push your knees outward against the band.">Wall Sits w/ Bands</span></label><div class="editable-reps">2 x <input type="number" value="1" data-rep-id="hus-wallsits"> min</div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-4"><label for="hus-task-4"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Lie on your back with knees bent. Lift your hips toward the ceiling, squeezing your glutes.">Hip Bridges</span></label><div class="editable-reps">2 x <input type="number" value="30" data-rep-id="hus-hipbridges"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-5"><label for="hus-task-5"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Stand straight and push through the balls of your feet to raise your heels.">Standing Calf Raises</span></label><div class="editable-reps">2 x <input type="number" value="20" data-rep-id="hus-calfraises"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-6"><label for="hus-task-6"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Sit on the floor, bring the soles of your feet together, and gently press your knees down towards the floor.">Butterfly Stretch</span></label></li>
+                    </ul>
+
+                    <h4 class="sub-heading">2. Flat Foot Exercises</h4>
+                     <ul class="task-list">
+                        <li class="task-item"><input type="checkbox" id="hus-task-7"><label for="hus-task-7"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Place a towel on the floor and use your toes to scrunch it toward you.">Towel Scrunches</span></label><div class="editable-reps">2 x <input type="number" value="20" data-rep-id="hus-towel-scrunches"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-8"><label for="hus-task-8"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Place a pen on the floor and try to pick it up using only your toes.">Toe Curls with Pen</span></label><div class="editable-reps">2 x <input type="number" value="20" data-rep-id="hus-toe-curls"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-9"><label for="hus-task-9"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Keeping your foot flat on the floor, raise the arch of your foot without curling your toes.">Arch Raises</span></label><div class="editable-reps">2 x <input type="number" value="30" data-rep-id="hus-arch-raises"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-10"><label for="hus-task-10"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Sit with feet flat on the floor. Keeping your heel down, lift the front of your foot up towards your shin.">Tibia Raises</span></label><div class="editable-reps">2 x <input type="number" value="20" data-rep-id="hus-tibia-raises"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-11"><label for="hus-task-11"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Use a massage ball or water bottle to roll out the arch of your foot, applying gentle pressure.">Foot Rolling Massage</span></label><div class="editable-reps"><input type="number" value="2" data-rep-id="hus-foot-roll"> min/foot</div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-12"><label for="hus-task-12"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Try to spread all your toes as wide as possible and hold the position.">Toe Spread and Hold</span></label><div class="editable-reps">5 x <input type="number" value="10" data-rep-id="hus-toe-spread"> s</div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-13"><label for="hus-task-13"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Press your four smaller toes down into the floor while lifting your big toe up. Then, press your big toe down while lifting the other four.">Foot Doming Exercise</span></label><div class="editable-reps">2 x <input type="number" value="20" data-rep-id="hus-foot-doming"></div></li>
+                    </ul>
+
+                     <h4 class="sub-heading">3. Warm-up (5 min)</h4>
+                    <ul class="task-list">
+                        <li class="task-item"><input type="checkbox" id="hus-task-warmup-1"><label for="hus-task-warmup-1"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Stand with feet shoulder-width apart. Jump while spreading legs and bringing arms overhead. Return to start.">Jumping Jacks</span></label><div class="editable-reps"><input type="number" value="30" data-rep-id="hus-jj"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-warmup-2"><label for="hus-task-warmup-2"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Extend arms to sides. Make 10 small circles forward, then 10 backward.">Arm Circles</span></label><div class="editable-reps"><input type="number" value="10" data-rep-id="hus-arm-circles"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-warmup-3"><label for="hus-task-warmup-3"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Stand and swing one leg forward and backward in a controlled motion, then switch legs.">Leg Swings</span></label><div class="editable-reps"><input type="number" value="10" data-rep-id="hus-leg-swings"> each</div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-warmup-4"><label for="hus-task-warmup-4"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Stand and march in place, bringing your knees up as high as you can toward your chest.">High Knees</span></label><div class="editable-reps"><input type="number" value="10" data-rep-id="hus-high-knees"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-warmup-5"><label for="hus-task-warmup-5"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Stand with feet shoulder-width apart. Lower your hips as if sitting in a chair, keeping your chest up and back straight.">Bodyweight Squats</span></label><div class="editable-reps"><input type="number" value="10" data-rep-id="hus-bw-squats"></div></li>
+                    </ul>
+
+                    <h4 class="sub-heading">4. Upper Body Circuit (Repeat 2x)</h4>
+                    <ul class="task-list">
+                        <li class="task-item"><input type="checkbox" id="hus-task-15"><label for="hus-task-15"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Grab a pull-up bar with palms facing you. Pull your body up until your chin is over the bar.">Chin-ups</span></label><div class="editable-reps">2 x <input type="number" value="10" data-rep-id="hus-chinups"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-16"><label for="hus-task-16"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Start in a high plank. Lower your body until your chest nearly touches the floor, then push back up.">Push-ups</span></label><div class="editable-reps">2 x <input type="number" value="20" data-rep-id="hus-pushups"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-17"><label for="hus-task-17"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="From a forearm plank, push up one arm at a time to a high plank, then lower back down.">Plank to Push-up</span></label><div class="editable-reps">2 x <input type="number" value="10" data-rep-id="hus-plank-pushup"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-18"><label for="hus-task-18"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Lie on your stomach. Lift your chest, arms, and legs off the floor, engaging your back muscles. Hold.">Superman Hold</span></label><div class="editable-reps"><input type="number" value="1" data-rep-id="hus-superman"> min</div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-19"><label for="hus-task-19"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Lie on your back with knees bent. Lift your upper body towards your knees using your core muscles.">Sit-ups/Crunches</span></label><div class="editable-reps">2 x <input type="number" value="20" data-rep-id="hus-situps"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-20"><label for="hus-task-20"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Sit with feet lifted and lean back. Twist your torso side to side.">Russian Twists</span></label><div class="editable-reps"><input type="number" value="30" data-rep-id="hus-russian-twists"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-21"><label for="hus-task-21"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="In a forearm plank position, perform a push-up by pressing through your forearms.">Forearm Pushups</span></label><div class="editable-reps">2 x <input type="number" value="10" data-rep-id="hus-forearm-pushups"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-22"><label for="hus-task-22"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Hold weights (or bottles/cans) and curl them toward your shoulders, keeping elbows tucked in.">Bicep Curls</span></label><div class="editable-reps">2 x <input type="number" value="20" data-rep-id="hus-bicep-curls"></div></li>
+                        <li class="task-item"><input type="checkbox" id="hus-task-23"><label for="hus-task-23"><span class="custom-checkbox"><svg viewBox="0 0 24 24"><path fill="white" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="task-name" data-description="Sit with legs straight, hands on the floor behind you. Lift your hips up to form a straight line. Hold.">Reverse Plank Hold</span></label><div class="editable-reps">2 x <input type="number" value="30" data-rep-id="hus-reverse-plank"> s</div></li>
+                    </ul>
+                </div>
+                
+                <textarea id="husband-notes" class="notes-box" placeholder="Notes, pain logs, or progress updates..."></textarea>
+            </section>
+
+        </div>
+    </main>
+
+    <main id="progress-view" class="view-container">
+        <div class="placeholder-page">
+            <h2>Progress</h2>
+            <div class="progress-streak-display">
+                <div class="streak-highlight alivah-streak">
+                    <h2>💖 Aliyah's Streak: <span class="streak-value" id="progress-wife-streak">0</span> Days</h2>
+                </div>
+                <div class="streak-highlight hasan-streak">
+                     <h2>🔥 Hasan's Streak: <span class="streak-value" id="progress-husband-streak">0</span> Days</h2>
+                </div>
+            </div>
+            <div class="notes-display-container">
+                <div class="note-display alivah-note">
+                    <h3>💖 Aliyah's Last Note:</h3>
+                    <p id="progress-wife-note">No notes yet...</p>
+                </div>
+                <div class="note-display hasan-note">
+                    <h3>🔥 Hasan's Last Note:</h3>
+                    <p id="progress-husband-note">No notes yet...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="exercise-modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Exercise Info</h3>
+            <p id="modal-description">Description will go here.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6l37wvFqKVO4FLDBlaq6Zs1Om3elY7xk",
+            authDomain: "workout-6a5e2.firebaseapp.com",
+            projectId: "workout-6a5e2",
+            storageBucket: "workout-6a5e2.firebasestorage.app",
+            messagingSenderId: "700544408784",
+            appId: "1:700544408784:web:050002fa1f5f8ec459d2d5",
+            measurementId: "G-K796V0RPTB"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const docRef = doc(db, "workoutData", "main");
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const wifeSide = document.getElementById('wife-side');
+            const husbandSide = document.getElementById('husband-side');
+            const wifeNotes = document.getElementById('wife-notes');
+            const husbandNotes = document.getElementById('husband-notes');
+            const wifeCheckboxes = wifeSide.querySelectorAll('input[type="checkbox"]');
+            const husbandCheckboxes = husbandSide.querySelectorAll('input[type="checkbox"]');
+            const wifeRepInputs = wifeSide.querySelectorAll('input[type="number"]');
+            const husbandRepInputs = husbandSide.querySelectorAll('input[type="number"]');
+            const wifeClearBtn = document.getElementById('wife-clear-btn');
+            const husbandClearBtn = document.getElementById('husband-clear-btn');
+            
+            const progressWifeStreakEl = document.getElementById('progress-wife-streak');
+            const progressHusbandStreakEl = document.getElementById('progress-husband-streak');
+            const progressWifeNoteEl = document.getElementById('progress-wife-note');
+            const progressHusbandNoteEl = document.getElementById('progress-husband-note');
+            
+            const modal = document.getElementById('exercise-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalDescription = document.getElementById('modal-description');
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const views = document.querySelectorAll('.view-container');
+
+            const defaultState = {
+                wife: { streak: 0, lastCompleted: null, notes: '', tasks: {}, reps: {}, lastReset: null },
+                husband: { streak: 0, lastCompleted: null, notes: '', tasks: {}, reps: {}, lastReset: null }
+            };
+
+            let appState = JSON.parse(JSON.stringify(defaultState));
+            let isInitialLoad = true;
+
+            function getTodayDateString() {
+                const today = new Date();
+                return today.toISOString().split('T')[0];
+            }
+
+            function isYesterday(dateString) {
+                if (!dateString) return false;
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                return dateString === yesterday.toISOString().split('T')[0];
+            }
+            
+            async function saveData() {
+                try {
+                    await setDoc(docRef, appState, { merge: true });
+                } catch (error) {
+                    console.error("Error writing document: ", error);
+                }
+            }
+
+            function resetDailyTasksIfNeeded() {
+                const today = getTodayDateString();
+                let stateChanged = false;
+                
+                ['wife', 'husband'].forEach(user => {
+                    const lastCompleted = appState[user].lastCompleted;
+                    const lastReset = appState[user].lastReset;
+
+                    if (lastReset !== today) {
+                        appState[user].tasks = {};
+                        appState[user].lastReset = today;
+                        stateChanged = true;
+                        
+                        if (lastCompleted && lastCompleted !== today && !isYesterday(lastCompleted)) {
+                            appState[user].streak = 0;
+                        }
+                    }
+                });
+
+                if (stateChanged) {
+                    saveData();
+                }
+            }
+            
+            function updateUIFromState() {
+                progressWifeStreakEl.textContent = appState.wife.streak;
+                progressHusbandStreakEl.textContent = appState.husband.streak;
+                
+                progressWifeNoteEl.textContent = appState.wife.notes || 'No notes yet...';
+                progressHusbandNoteEl.textContent = appState.husband.notes || 'No notes yet...';
+                
+                if (document.activeElement !== wifeNotes) {
+                    wifeNotes.value = appState.wife.notes || '';
+                }
+                if (document.activeElement !== husbandNotes) {
+                   husbandNotes.value = appState.husband.notes || '';
+                }
+                
+                wifeCheckboxes.forEach(cb => {
+                    cb.checked = !!appState.wife.tasks[cb.id];
+                });
+                
+                wifeRepInputs.forEach(input => {
+                    const repId = input.dataset.repId;
+                    if(appState.wife.reps && appState.wife.reps[repId]) {
+                        input.value = appState.wife.reps[repId];
+                    }
+                });
+
+                husbandCheckboxes.forEach(cb => {
+                    cb.checked = !!appState.husband.tasks[cb.id];
+                });
+
+                husbandRepInputs.forEach(input => {
+                    const repId = input.dataset.repId;
+                    if(appState.husband.reps && appState.husband.reps[repId]) {
+                        input.value = appState.husband.reps[repId];
+                    }
+                });
+            }
+
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const firestoreData = docSnap.data();
+                    appState.wife = { ...defaultState.wife, ...firestoreData.wife };
+                    appState.husband = { ...defaultState.husband, ...firestoreData.husband };
+                } else {
+                    appState = JSON.parse(JSON.stringify(defaultState));
+                    saveData();
+                }
+                
+                if (isInitialLoad) {
+                    resetDailyTasksIfNeeded();
+                    isInitialLoad = false;
+                }
+                
+                updateUIFromState();
+            });
+
+            function checkCompletion(user) {
+                const userSide = (user === 'wife') ? wifeSide : husbandSide;
+                const checkboxes = userSide.querySelectorAll('input[type="checkbox"]');
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                const today = getTodayDateString();
+
+                if (allChecked && appState[user].lastCompleted !== today) {
+                    if (isYesterday(appState[user].lastCompleted) || appState[user].streak === 0 || !appState[user].lastCompleted) {
+                        appState[user].streak++;
+                    } else if (appState[user].lastCompleted !== today) {
+                        appState[user].streak = 1;
+                    }
+                    appState[user].lastCompleted = today;
+                    saveData();
+                }
+            }
+            
+            function handleClearTasks(user) {
+                appState[user].tasks = {};
+                const userSide = (user === 'wife') ? wifeSide : husbandSide;
+                userSide.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                saveData();
+            }
+
+            husbandClearBtn.addEventListener('click', () => handleClearTasks('husband'));
+            wifeClearBtn.addEventListener('click', () => handleClearTasks('wife'));
+
+            function handleCheckboxChange(e, user) {
+                const checkbox = e.target;
+                appState[user].tasks[checkbox.id] = checkbox.checked;
+                checkCompletion(user);
+                saveData();
+            }
+            
+            function handleRepInputChange(e, user) {
+                const input = e.target;
+                const repId = input.dataset.repId;
+                if (!appState[user].reps) appState[user].reps = {};
+                appState[user].reps[repId] = input.value;
+                saveData();
+            }
+
+            wifeSide.addEventListener('change', e => {
+                if(e.target.type === 'checkbox') handleCheckboxChange(e, 'wife');
+                if(e.target.type === 'number') handleRepInputChange(e, 'wife');
+            });
+
+            husbandSide.addEventListener('change', e => {
+                if(e.target.type === 'checkbox') handleCheckboxChange(e, 'husband');
+                if(e.target.type === 'number') handleRepInputChange(e, 'husband');
+            });
+            
+            function debounce(func, timeout = 300){
+                let timer;
+                return (...args) => {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => { func.apply(this, args); }, timeout);
+                };
+            }
+
+            const saveWifeNotes = debounce(() => saveData());
+            const saveHusbandNotes = debounce(() => saveData());
+
+            wifeNotes.addEventListener('input', () => {
+                appState.wife.notes = wifeNotes.value;
+                saveWifeNotes();
+            });
+
+            husbandNotes.addEventListener('input', () => {
+                appState.husband.notes = husbandNotes.value;
+                saveHusbandNotes();
+            });
+
+            wifeNotes.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    e.target.blur();
+                }
+            });
+
+            husbandNotes.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    e.target.blur();
+                }
+            });
+
+            document.querySelectorAll('.task-name').forEach(nameEl => {
+                nameEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const description = e.target.dataset.description;
+                    if (description) {
+                        modalTitle.textContent = e.target.textContent;
+                        modalDescription.textContent = description;
+                        modal.classList.add('visible');
+                    }
+                });
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('visible');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const view = e.target.dataset.view;
+                    
+                    views.forEach(v => v.classList.remove('active'));
+                    navLinks.forEach(l => l.classList.remove('active'));
+
+                    document.getElementById(`${view}-view`).classList.add('active');
+                    e.target.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
