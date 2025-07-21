@@ -645,25 +645,14 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyD6l37wvFqKVO4FLDBlaq6Zs1Om3elY7xk",
-            authDomain: "workout-6a5e2.firebaseapp.com",
-            projectId: "workout-6a5e2",
-            storageBucket: "workout-6a5e2.firebasestorage.app",
-            messagingSenderId: "700544408784",
-            appId: "1:700544408784:web:050002fa1f5f8ec459d2d5",
-            measurementId: "G-K796V0RPTB"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const docRef = doc(db, "workoutData", "main");
-
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
+
+            const MANUAL_STREAKS = {
+                wife: 0,
+                husband: 0
+            };
+            
             const wifeSide = document.getElementById('wife-side');
             const husbandSide = document.getElementById('husband-side');
             const wifeNotes = document.getElementById('wife-notes');
@@ -687,56 +676,52 @@
             const navLinks = document.querySelectorAll('.nav-link');
             const views = document.querySelectorAll('.view-container');
 
-            const defaultState = {
-                wife: { streak: 0, lastCompleted: null, notes: '', tasks: {}, reps: {}, lastReset: null },
-                husband: { streak: 0, lastCompleted: null, notes: '', tasks: {}, reps: {}, lastReset: null }
-            };
+            let appState = {};
 
-            let appState = JSON.parse(JSON.stringify(defaultState));
-            let isInitialLoad = true;
+            function loadData() {
+                const savedData = localStorage.getItem('workoutTrackerData');
+                if (savedData) {
+                    appState = JSON.parse(savedData);
+                } else {
+                    appState = {
+                        wife: { streak: 0, lastCompleted: null, notes: '', tasks: {}, reps: {}, lastReset: null },
+                        husband: { streak: 0, lastCompleted: null, notes: '', tasks: {}, reps: {}, lastReset: null }
+                    };
+                }
 
+                appState.wife.streak = MANUAL_STREAKS.wife;
+                appState.husband.streak = MANUAL_STREAKS.husband;
+            }
+            
+            function saveData() {
+                try {
+                    localStorage.setItem('workoutTrackerData', JSON.stringify(appState));
+                } catch (error) {
+                    console.error("Error saving data to localStorage: ", error);
+                }
+            }
+            
             function getTodayDateString() {
                 const today = new Date();
                 return today.toISOString().split('T')[0];
             }
 
-            function isYesterday(dateString) {
-                if (!dateString) return false;
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                return dateString === yesterday.toISOString().split('T')[0];
-            }
-            
-            async function saveData() {
-                try {
-                    await setDoc(docRef, appState, { merge: true });
-                } catch (error) {
-                    console.error("Error writing document: ", error);
-                }
-            }
-
             function resetDailyTasksIfNeeded() {
                 const today = getTodayDateString();
-                let stateChanged = false;
                 
                 ['wife', 'husband'].forEach(user => {
-                    const lastCompleted = appState[user].lastCompleted;
+                    if (!appState[user]) {
+                        appState[user] = { streak: MANUAL_STREAKS[user], lastCompleted: null, notes: '', tasks: {}, reps: {}, lastReset: null };
+                    }
+                    
                     const lastReset = appState[user].lastReset;
 
                     if (lastReset !== today) {
                         appState[user].tasks = {};
                         appState[user].lastReset = today;
-                        stateChanged = true;
-                        
-                        if (lastCompleted && lastCompleted !== today && !isYesterday(lastCompleted)) {
-                            appState[user].streak = 0;
-                        }
+                        saveData();
                     }
                 });
-
-                if (stateChanged) {
-                    saveData();
-                }
             }
             
             function updateUIFromState() {
@@ -754,7 +739,7 @@
                 }
                 
                 wifeCheckboxes.forEach(cb => {
-                    cb.checked = !!appState.wife.tasks[cb.id];
+                    cb.checked = !!(appState.wife.tasks && appState.wife.tasks[cb.id]);
                 });
                 
                 wifeRepInputs.forEach(input => {
@@ -765,7 +750,7 @@
                 });
 
                 husbandCheckboxes.forEach(cb => {
-                    cb.checked = !!appState.husband.tasks[cb.id];
+                    cb.checked = !!(appState.husband.tasks && appState.husband.tasks[cb.id]);
                 });
 
                 husbandRepInputs.forEach(input => {
@@ -776,41 +761,6 @@
                 });
             }
 
-            onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const firestoreData = docSnap.data();
-                    appState.wife = { ...defaultState.wife, ...firestoreData.wife };
-                    appState.husband = { ...defaultState.husband, ...firestoreData.husband };
-                } else {
-                    appState = JSON.parse(JSON.stringify(defaultState));
-                    saveData();
-                }
-                
-                if (isInitialLoad) {
-                    resetDailyTasksIfNeeded();
-                    isInitialLoad = false;
-                }
-                
-                updateUIFromState();
-            });
-
-            function checkCompletion(user) {
-                const userSide = (user === 'wife') ? wifeSide : husbandSide;
-                const checkboxes = userSide.querySelectorAll('input[type="checkbox"]');
-                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-                const today = getTodayDateString();
-
-                if (allChecked && appState[user].lastCompleted !== today) {
-                    if (isYesterday(appState[user].lastCompleted) || appState[user].streak === 0 || !appState[user].lastCompleted) {
-                        appState[user].streak++;
-                    } else if (appState[user].lastCompleted !== today) {
-                        appState[user].streak = 1;
-                    }
-                    appState[user].lastCompleted = today;
-                    saveData();
-                }
-            }
-            
             function handleClearTasks(user) {
                 appState[user].tasks = {};
                 const userSide = (user === 'wife') ? wifeSide : husbandSide;
@@ -823,8 +773,8 @@
 
             function handleCheckboxChange(e, user) {
                 const checkbox = e.target;
+                if (!appState[user].tasks) appState[user].tasks = {};
                 appState[user].tasks[checkbox.id] = checkbox.checked;
-                checkCompletion(user);
                 saveData();
             }
             
@@ -854,31 +804,16 @@
                 };
             }
 
-            const saveWifeNotes = debounce(() => saveData());
-            const saveHusbandNotes = debounce(() => saveData());
+            const saveNotes = debounce(() => saveData());
 
             wifeNotes.addEventListener('input', () => {
                 appState.wife.notes = wifeNotes.value;
-                saveWifeNotes();
+                saveNotes();
             });
 
             husbandNotes.addEventListener('input', () => {
                 appState.husband.notes = husbandNotes.value;
-                saveHusbandNotes();
-            });
-
-            wifeNotes.addEventListener('keydown', e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    e.target.blur();
-                }
-            });
-
-            husbandNotes.addEventListener('keydown', e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    e.target.blur();
-                }
+                saveNotes();
             });
 
             document.querySelectorAll('.task-name').forEach(nameEl => {
@@ -912,6 +847,10 @@
                     e.target.classList.add('active');
                 });
             });
+
+            loadData();
+            resetDailyTasksIfNeeded();
+            updateUIFromState();
         });
     </script>
 </body>
